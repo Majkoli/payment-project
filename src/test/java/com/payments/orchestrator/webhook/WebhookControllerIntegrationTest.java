@@ -224,6 +224,38 @@ class WebhookControllerIntegrationTest extends AbstractIntegrationTest {
         assertThat(webhookEventRepository.count()).isZero();
     }
 
+    @Test
+    void capturedOvertakingAuthorizedCatchesUpThroughAuthorized() throws Exception {
+        saveCharge(ChargeStatus.PENDING);
+
+        send(event("evt_cap_first", "charge.captured"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("PROCESSED"));
+
+        Charge charge = currentCharge();
+        assertThat(charge.getStatus()).isEqualTo(ChargeStatus.CAPTURED);
+        assertThat(charge.getVersion()).isEqualTo(1);
+
+        // the delayed authorization finally arrives: already passed, so an idempotent no-op
+        send(event("evt_auth_late", "charge.authorized"))
+                .andExpect(jsonPath("$.status").value("IGNORED"));
+        assertThat(currentCharge().getStatus()).isEqualTo(ChargeStatus.CAPTURED);
+    }
+
+    @Test
+    void acceptsSnakeCasePayloadFieldNames() throws Exception {
+        saveCharge(ChargeStatus.PENDING);
+
+        send("""
+                {"event_id":"evt_snake","event_type":"charge.authorized","psp_reference":"%s","amount_minor":49900}"""
+                .formatted(pspRef))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("PROCESSED"));
+
+        assertThat(currentCharge().getStatus()).isEqualTo(ChargeStatus.AUTHORIZED);
+        assertThat(webhookEventRepository.existsById("evt_snake")).isTrue();
+    }
+
     // ---- concurrency ----
 
     @Test
