@@ -27,5 +27,14 @@ services:
       timeout: 3s
       retries: 10
 
+  psp-mock:
+    image: wiremock/wiremock:3.9.2
+    container_name: payments-psp-mock
+    command: ["--global-response-templating"]
+    ports:
+      - "8089:8080"
+    volumes:
+      - ./wiremock:/home/wiremock
+
 volumes:
   postgres_data:

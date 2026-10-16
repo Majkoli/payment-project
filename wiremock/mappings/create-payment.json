@@ -1,0 +1,12 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/v1/payments"
+  },
+  "response": {
+    "status": 201,
+    "headers": { "Content-Type": "application/json" },
+    "jsonBody": { "id": "psp_{{randomValue length=16 type='ALPHANUMERIC'}}" },
+    "transformers": ["response-template"]
+  }
+}
