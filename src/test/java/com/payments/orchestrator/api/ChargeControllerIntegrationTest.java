@@ -208,6 +208,23 @@ class ChargeControllerIntegrationTest extends AbstractIntegrationTest {
                 .withHeader("Idempotency-Key", equalTo(chargeId.toString())));
     }
 
+    @Test
+    void getChargeByIdReturns200And404ForUnknown() throws Exception {
+        stubPspAccepts("psp_get_1", 0);
+        perform("k-get", BODY).andExpect(status().isCreated());
+        UUID chargeId = chargeRepository.findAll().get(0).getId();
+
+        mockMvc.perform(MockMvcRequestBuilders.get(URL + "/" + chargeId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(chargeId.toString()))
+                .andExpect(jsonPath("$.pspReference").value("psp_get_1"))
+                .andExpect(jsonPath("$.amountMinor").value(49900))
+                .andExpect(jsonPath("$.status").value("PENDING"));
+
+        mockMvc.perform(MockMvcRequestBuilders.get(URL + "/" + UUID.randomUUID()))
+                .andExpect(status().isNotFound());
+    }
+
     private org.springframework.test.web.servlet.ResultActions perform(String key, String body) throws Exception {
         return mockMvc.perform(MockMvcRequestBuilders.post(URL).header("Idempotency-Key", key)
                 .contentType(MediaType.APPLICATION_JSON).content(body));

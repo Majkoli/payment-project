@@ -70,6 +70,13 @@ public class ChargeService {
         }
     }
 
+    public ChargeResponse getCharge(UUID chargeId) {
+        return transactionTemplate.execute(status -> chargeRepository.findById(chargeId)
+                .map(ChargeResponse::from)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Charge not found: " + chargeId)));
+    }
+
     private Charge fail(UUID chargeId, String reason) {
         return update(chargeId, c -> {
             stateMachine.apply(c, PaymentEvent.CHARGE_FAILED);

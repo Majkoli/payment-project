@@ -126,6 +126,11 @@ curl -i -X POST http://localhost:8080/api/v1/webhooks/psp \
   -d "$BODY"
 ```
 
+**Fetch a Charge by ID:**
+```bash
+curl -i http://localhost:8080/api/v1/charges/<charge-uuid>
+```
+
 ### 4. Run the Verification & Integration Test Suite
 ```bash
 ./mvnw verify

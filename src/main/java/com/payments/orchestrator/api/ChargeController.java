@@ -1,5 +1,6 @@
 package com.payments.orchestrator.api;
 
+import com.payments.orchestrator.api.dto.ChargeResponse;
 import com.payments.orchestrator.api.dto.CreateChargeRequest;
 import com.payments.orchestrator.idempotency.IdempotencyDecision;
 import com.payments.orchestrator.idempotency.IdempotencyManagerService;
@@ -10,12 +11,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping(ChargeController.PATH)
@@ -56,6 +61,11 @@ public class ChargeController {
         return ResponseEntity.status(outcome.httpStatus())
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(outcome.body());
+    }
+
+    @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ChargeResponse> getCharge(@PathVariable UUID id) {
+        return ResponseEntity.ok(chargeService.getCharge(id));
     }
 
     private static String requireValidKey(String key) {
