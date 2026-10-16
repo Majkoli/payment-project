@@ -53,5 +53,6 @@ public abstract class AbstractIntegrationTest {
         registry.add("spring.datasource.username", () -> DB_USER);
         registry.add("spring.datasource.password", () -> DB_PASSWORD);
         registry.add("psp.base-url", () -> "http://localhost:" + PSP.port());
+        registry.add("reconciliation.cron", () -> "-"); // tests call the worker directly
     }
 }
