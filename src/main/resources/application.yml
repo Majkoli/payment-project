@@ -32,3 +32,7 @@ psp:
 idempotency:
   ttl: 24h                 # how long a completed response is replayable
   in-progress-timeout: 5m  # lease after which a stuck IN_PROGRESS key can be reclaimed
+
+reconciliation:
+  cron: "0 */5 * * * *"    # every 5 minutes; "-" disables the worker
+  stale-after: 15m         # PENDING charges older than this are reconciled against the PSP

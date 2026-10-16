@@ -24,6 +24,14 @@ public interface ChargeRepository extends JpaRepository<Charge, UUID> {
     @Query("select c from Charge c where c.pspReference = :pspReference")
     Optional<Charge> findByPspReferenceForUpdate(@Param("pspReference") String pspReference);
 
+    /**
+     * Loads the charge by id with {@code SELECT ... FOR UPDATE}. Used when the PSP reference may be
+     * absent (reconciliation). Must be called inside a transaction.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select c from Charge c where c.id = :id")
+    Optional<Charge> findByIdForUpdate(@Param("id") UUID id);
+
     /** PENDING charges created strictly before {@code cutoffTime}, oldest first. */
     @Query("""
             select c from Charge c
