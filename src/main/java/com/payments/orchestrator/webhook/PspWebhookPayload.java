@@ -1,7 +1,9 @@
 package com.payments.orchestrator.webhook;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+
 /**
- * Webhook body sent by the PSP.
+ * Webhook body sent by the PSP. Both camelCase and snake_case field names are accepted.
  *
  * @param eventId       PSP-unique event id, used for deduplication
  * @param eventType     e.g. {@code charge.authorized}
@@ -10,9 +12,9 @@ package com.payments.orchestrator.webhook;
  * @param failureReason optional; stored on the charge for {@code charge.failed}
  */
 public record PspWebhookPayload(
-        String eventId,
-        String eventType,
-        String pspReference,
-        Long amountMinor,
-        String failureReason) {
+        @JsonAlias("event_id") String eventId,
+        @JsonAlias("event_type") String eventType,
+        @JsonAlias("psp_reference") String pspReference,
+        @JsonAlias("amount_minor") Long amountMinor,
+        @JsonAlias("failure_reason") String failureReason) {
 }

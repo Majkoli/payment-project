@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.payments.orchestrator.domain.exception.IllegalStateTransitionException;
 import com.payments.orchestrator.domain.model.Charge;
+import com.payments.orchestrator.domain.model.ChargeStatus;
 import com.payments.orchestrator.domain.model.PaymentEvent;
 import com.payments.orchestrator.domain.repository.ChargeRepository;
 import com.payments.orchestrator.domain.repository.WebhookEventRepository;
@@ -101,6 +102,14 @@ public class WebhookService {
         }
 
         try {
+            if (event.get() == PaymentEvent.CHARGE_CAPTURED && charge.getStatus() == ChargeStatus.PENDING) {
+                // Webhooks are not ordered: charge.captured can overtake (or outlive a dropped)
+                // charge.authorized. A capture implies the authorization, so record it first; the
+                // state machine itself stays strict about skipped steps.
+                log.info("Webhook event {} captured charge {} without a prior authorization; applying it first",
+                        payload.eventId(), charge.getId());
+                stateMachine.apply(charge, PaymentEvent.CHARGE_AUTHORIZED);
+            }
             TransitionResult result = stateMachine.apply(charge, event.get());
             if (result == TransitionResult.NO_OP) {
                 log.info("Webhook event {} is a no-op for charge {} in status {}",
