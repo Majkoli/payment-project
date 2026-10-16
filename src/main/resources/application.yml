@@ -26,3 +26,9 @@ psp:
   webhook:
     secret: test_hmac_secret_key_123
   base-url: http://localhost:8089
+  connect-timeout: 2s
+  read-timeout: 5s
+
+idempotency:
+  ttl: 24h                 # how long a completed response is replayable
+  in-progress-timeout: 5m  # lease after which a stuck IN_PROGRESS key can be reclaimed
