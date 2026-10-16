@@ -6,8 +6,7 @@ import com.payments.orchestrator.domain.model.Charge;
 import com.payments.orchestrator.domain.model.PaymentEvent;
 import com.payments.orchestrator.domain.repository.ChargeRepository;
 import com.payments.orchestrator.domain.service.PaymentStateMachine;
-import com.payments.orchestrator.psp.PspChargeRequest;
-import com.payments.orchestrator.psp.PspChargeResult;
+import com.payments.orchestrator.psp.PspChargeResponse;
 import com.payments.orchestrator.psp.PspClient;
 import com.payments.orchestrator.psp.PspRejectedException;
 import com.payments.orchestrator.psp.PspUnavailableException;
@@ -56,8 +55,8 @@ public class ChargeService {
                 .build()));
 
         try {
-            PspChargeResult result = pspClient.createCharge(
-                    new PspChargeRequest(charge.getId(), charge.getAmountMinor(), charge.getCurrency()));
+            PspChargeResponse result = pspClient.initiateCharge(
+                    charge.getId(), charge.getAmountMinor(), charge.getCurrency());
             Charge submitted = update(charge.getId(), c -> c.setPspReference(result.pspReference()));
             return new ChargeOutcome(HttpStatus.CREATED.value(), ChargeResponse.from(submitted));
         } catch (PspRejectedException e) {

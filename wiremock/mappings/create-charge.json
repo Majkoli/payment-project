@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "/v1/payments"
+    "url": "/v1/charges"
   },
   "response": {
     "status": 201,

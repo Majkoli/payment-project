@@ -71,7 +71,7 @@ class ChargeControllerIntegrationTest extends AbstractIntegrationTest {
             assertThat(r.getChargeId()).isNotNull();
             assertThat(r.getExpiresAt()).isAfter(r.getCreatedAt().plusSeconds(23 * 3600));
         });
-        PSP.verify(1, postRequestedFor(urlEqualTo("/v1/payments")));
+        PSP.verify(1, postRequestedFor(urlEqualTo("/v1/charges")));
     }
 
     @Test
@@ -87,7 +87,7 @@ class ChargeControllerIntegrationTest extends AbstractIntegrationTest {
 
         assertThat(second.getResponse().getContentAsString()).isEqualTo(first.getResponse().getContentAsString());
         assertThat(chargeRepository.count()).isEqualTo(1);
-        PSP.verify(1, postRequestedFor(urlEqualTo("/v1/payments")));
+        PSP.verify(1, postRequestedFor(urlEqualTo("/v1/charges")));
     }
 
     @Test
@@ -99,7 +99,7 @@ class ChargeControllerIntegrationTest extends AbstractIntegrationTest {
         perform("k-currency", """
                 {"amountMinor":100,"currency":"sek","accountId":"acc_1"}""").andExpect(status().isCreated());
 
-        PSP.verify(1, postRequestedFor(urlEqualTo("/v1/payments")));
+        PSP.verify(1, postRequestedFor(urlEqualTo("/v1/charges")));
     }
 
     @Test
@@ -112,7 +112,7 @@ class ChargeControllerIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isUnprocessableEntity());
 
         assertThat(chargeRepository.count()).isEqualTo(1);
-        PSP.verify(1, postRequestedFor(urlEqualTo("/v1/payments")));
+        PSP.verify(1, postRequestedFor(urlEqualTo("/v1/charges")));
     }
 
     @Test
@@ -157,12 +157,12 @@ class ChargeControllerIntegrationTest extends AbstractIntegrationTest {
         assertThat(statuses).containsOnly(201, 409);
         assertThat(statuses).filteredOn(s -> s == 201).hasSize(1);
         assertThat(chargeRepository.count()).isEqualTo(1);
-        PSP.verify(1, postRequestedFor(urlEqualTo("/v1/payments")));
+        PSP.verify(1, postRequestedFor(urlEqualTo("/v1/charges")));
     }
 
     @Test
     void pspRejectionFailsChargeAndIsCachedForReplay() throws Exception {
-        PSP.stubFor(post(urlEqualTo("/v1/payments")).willReturn(aResponse().withStatus(402).withBody("card_declined")));
+        PSP.stubFor(post(urlEqualTo("/v1/charges")).willReturn(aResponse().withStatus(402).withBody("card_declined")));
 
         perform("k-declined", BODY)
                 .andExpect(status().isPaymentRequired())
@@ -174,12 +174,12 @@ class ChargeControllerIntegrationTest extends AbstractIntegrationTest {
         Charge charge = chargeRepository.findAll().get(0);
         assertThat(charge.getStatus()).isEqualTo(ChargeStatus.FAILED);
         assertThat(charge.getFailureReason()).contains("card_declined");
-        PSP.verify(1, postRequestedFor(urlEqualTo("/v1/payments")));
+        PSP.verify(1, postRequestedFor(urlEqualTo("/v1/charges")));
     }
 
     @Test
     void pspOutageReturns502AndKeyCanBeRetried() throws Exception {
-        PSP.stubFor(post(urlEqualTo("/v1/payments")).willReturn(aResponse().withStatus(503)));
+        PSP.stubFor(post(urlEqualTo("/v1/charges")).willReturn(aResponse().withStatus(503)));
         perform("k-outage", BODY).andExpect(status().isBadGateway());
 
         assertThat(idempotencyRepository.findById("k-outage")).get()
@@ -204,7 +204,7 @@ class ChargeControllerIntegrationTest extends AbstractIntegrationTest {
         perform("k-header", BODY).andExpect(status().isCreated());
 
         UUID chargeId = chargeRepository.findAll().get(0).getId();
-        PSP.verify(postRequestedFor(urlEqualTo("/v1/payments"))
+        PSP.verify(postRequestedFor(urlEqualTo("/v1/charges"))
                 .withHeader("Idempotency-Key", equalTo(chargeId.toString())));
     }
 
@@ -214,7 +214,7 @@ class ChargeControllerIntegrationTest extends AbstractIntegrationTest {
     }
 
     private static void stubPspAccepts(String pspReference, int delayMs) {
-        PSP.stubFor(post(urlEqualTo("/v1/payments")).willReturn(aResponse()
+        PSP.stubFor(post(urlEqualTo("/v1/charges")).willReturn(aResponse()
                 .withStatus(201)
                 .withFixedDelay(delayMs)
                 .withHeader("Content-Type", "application/json")
